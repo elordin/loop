@@ -18,6 +18,7 @@ import System.Environment
     '-'     { TokenMinus }
     ';'     { TokenSeq }
     'LOOP'  { TokenLoop }
+    'WHILE' { TokenWhile }
     'DO'    { TokenDo }
     'END'   { TokenEnd }
 
@@ -26,6 +27,7 @@ Exp : var ':=' var '+' int      { AssP $1 $3 $5 }
     | var ':=' var '-' int      { AssM $1 $3 $5 }
     | Exp ';' Exp               { Seq  $1 $3 }
     | 'LOOP' var 'DO' Exp 'END' { Loop $2 $4}
+    | 'WHILE' var 'DO' Exp 'END' { While $2 $4}
 
 {
 type Var = Int
@@ -36,6 +38,7 @@ data Exp
     | AssM Var Var Const
     | Seq Exp Exp
     | Loop Var Exp
+    | While Var Exp
     deriving Show
 
 data Token
@@ -46,6 +49,7 @@ data Token
     | TokenMinus
     | TokenSeq
     | TokenLoop
+    | TokenWhile
     | TokenDo
     | TokenEnd
     deriving Show
@@ -61,27 +65,22 @@ lexer ('+':cs) = TokenPlus : lexer cs
 lexer ('-':cs) = TokenMinus : lexer cs
 lexer (';':cs) = TokenSeq : lexer cs
 lexer ('L':'O':'O':'P':cs) = TokenLoop : lexer cs
+lexer ('W':'H':'I':'L':'E':cs) = TokenWhile : lexer cs
 lexer ('D':'O':cs) = TokenDo : lexer cs
 lexer ('E':'N':'D':cs) = TokenEnd : lexer cs
 lexer ('x':cs) = lexVar cs
+    where lexVar cs = let (num, rest) = span isDigit cs
+                      in TokenVar (read num) : lexer rest
 lexer (c:cs)
     | isDigit c = lexNum (c:cs)
-lexer _ = error "Invalid syntax"
-
+    where lexNum cs = let (num,rest) = span isDigit cs
+                      in TokenConst (read num) : lexer rest
+lexer cs = error $ "Invalid syntax near " ++ take 5 cs ++ "..."
 skipLine ('\n':cs) = lexer cs
 skipLine (_:cs) = skipLine cs
 
-lexVar cs = TokenVar (read num) : lexer rest
-    where (num, rest) = span isDigit cs
-
-lexNum cs = TokenConst (read num) : lexer rest
-      where (num,rest) = span isDigit cs
-
-
 parseError :: [Token] -> a
 parseError tokens = error $ "Error parsing" ++ (show tokens)
-
---main = getContents >>= print . parse . lexer
 
 eval :: Exp -> Map.Map Var Const -> Const
 eval exp initial = fromMaybe 0 $ Map.lookup 0 $ evalIntoDict exp initial
@@ -94,6 +93,9 @@ eval exp initial = fromMaybe 0 $ Map.lookup 0 $ evalIntoDict exp initial
         evalIntoDict (AssM x y c) dict = evalIntoDict (AssP x y (-1*c)) dict
         evalIntoDict (Seq e1 e2) dict = evalIntoDict e2 $ evalIntoDict e1 dict
         evalIntoDict l@(Loop cond exp) dict = loop (fromMaybe 0 $ Map.lookup cond dict) exp dict
+        evalIntoDict l@(While cond exp) dict
+            | (fromMaybe 0 $ Map.lookup cond dict) == 0 = dict
+            | otherwise = evalIntoDict l $ evalIntoDict exp dict
 
 evalString :: String -> Map.Map Var Const -> Const
 evalString s dict = eval (parse $ lexer $ s) dict
@@ -117,7 +119,20 @@ main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [] -> return ()
+        [] -> do
+            putStrLn "LOOP / WHILE interpreter"
+            putStrLn "    Usage: "
+            putStrLn "        loop filename [x0 x1 x2 ...]\n"
+            putStrLn "    LOOP Syntax:"
+            putStrLn "        L ::= xn := xm + c"
+            putStrLn "            | xn := xm - c"
+            putStrLn "            | L; L"
+            putStrLn "            | LOOP xn DO L END\n"
+            putStrLn "    WHILE Syntax:"
+            putStrLn "        W ::= xn := xm + c"
+            putStrLn "            | xn := xm - c"
+            putStrLn "            | W; W"
+            putStrLn "            | WHILE xn DO W END\n"
         (f:[]) -> evalFileEmpty f
         (f:t) -> do
             let (vals, _) = span isInteger t

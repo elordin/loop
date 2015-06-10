@@ -14,69 +14,90 @@ data HappyAbsSyn t4
 
 action_0 (5) = happyShift action_4
 action_0 (11) = happyShift action_5
+action_0 (12) = happyShift action_6
 action_0 (4) = happyGoto action_3
 action_0 _ = happyFail
 
 action_1 (5) = happyShift action_2
 action_1 _ = happyFail
 
-action_2 (7) = happyShift action_9
+action_2 (7) = happyShift action_11
 action_2 _ = happyFail
 
-action_3 (10) = happyShift action_8
-action_3 (14) = happyAccept
+action_3 (10) = happyShift action_10
+action_3 (15) = happyAccept
 action_3 _ = happyFail
 
-action_4 (7) = happyShift action_7
+action_4 (7) = happyShift action_9
 action_4 _ = happyFail
 
-action_5 (5) = happyShift action_6
+action_5 (5) = happyShift action_8
 action_5 _ = happyFail
 
-action_6 (12) = happyShift action_13
+action_6 (5) = happyShift action_7
 action_6 _ = happyFail
 
-action_7 (5) = happyShift action_12
+action_7 (13) = happyShift action_16
 action_7 _ = happyFail
 
-action_8 (5) = happyShift action_4
-action_8 (11) = happyShift action_5
-action_8 (4) = happyGoto action_11
+action_8 (13) = happyShift action_15
 action_8 _ = happyFail
 
-action_9 (5) = happyShift action_10
+action_9 (5) = happyShift action_14
 action_9 _ = happyFail
 
-action_10 (8) = happyShift action_15
+action_10 (5) = happyShift action_4
+action_10 (11) = happyShift action_5
+action_10 (12) = happyShift action_6
+action_10 (4) = happyGoto action_13
 action_10 _ = happyFail
 
-action_11 (10) = happyShift action_8
-action_11 _ = happyReduce_3
+action_11 (5) = happyShift action_12
+action_11 _ = happyFail
 
-action_12 (8) = happyShift action_15
-action_12 (9) = happyShift action_16
+action_12 (8) = happyShift action_19
 action_12 _ = happyFail
 
-action_13 (5) = happyShift action_4
-action_13 (11) = happyShift action_5
-action_13 (4) = happyGoto action_14
-action_13 _ = happyFail
+action_13 (10) = happyShift action_10
+action_13 _ = happyReduce_3
 
-action_14 (10) = happyShift action_8
-action_14 (13) = happyShift action_19
+action_14 (8) = happyShift action_19
+action_14 (9) = happyShift action_20
 action_14 _ = happyFail
 
-action_15 (6) = happyShift action_18
+action_15 (5) = happyShift action_4
+action_15 (11) = happyShift action_5
+action_15 (12) = happyShift action_6
+action_15 (4) = happyGoto action_18
 action_15 _ = happyFail
 
-action_16 (6) = happyShift action_17
+action_16 (5) = happyShift action_4
+action_16 (11) = happyShift action_5
+action_16 (12) = happyShift action_6
+action_16 (4) = happyGoto action_17
 action_16 _ = happyFail
 
-action_17 _ = happyReduce_2
+action_17 (10) = happyShift action_10
+action_17 (14) = happyShift action_24
+action_17 _ = happyFail
 
-action_18 _ = happyReduce_1
+action_18 (10) = happyShift action_10
+action_18 (14) = happyShift action_23
+action_18 _ = happyFail
 
-action_19 _ = happyReduce_4
+action_19 (6) = happyShift action_22
+action_19 _ = happyFail
+
+action_20 (6) = happyShift action_21
+action_20 _ = happyFail
+
+action_21 _ = happyReduce_2
+
+action_22 _ = happyReduce_1
+
+action_23 _ = happyReduce_4
+
+action_24 _ = happyReduce_5
 
 happyReduce_1 = happyReduce 5 4 happyReduction_1
 happyReduction_1 ((HappyTerminal (TokenConst happy_var_5)) `HappyStk`
@@ -120,8 +141,19 @@ happyReduction_4 (_ `HappyStk`
 		 (Loop happy_var_2 happy_var_4
 	) `HappyStk` happyRest
 
+happyReduce_5 = happyReduce 5 4 happyReduction_5
+happyReduction_5 (_ `HappyStk`
+	(HappyAbsSyn4  happy_var_4) `HappyStk`
+	_ `HappyStk`
+	(HappyTerminal (TokenVar happy_var_2)) `HappyStk`
+	_ `HappyStk`
+	happyRest)
+	 = HappyAbsSyn4
+		 (While happy_var_2 happy_var_4
+	) `HappyStk` happyRest
+
 happyNewToken action sts stk [] =
-	action 14 14 notHappyAtAll (HappyState action) sts stk []
+	action 15 15 notHappyAtAll (HappyState action) sts stk []
 
 happyNewToken action sts stk (tk:tks) =
 	let cont i = action i i tk (HappyState action) sts stk tks in
@@ -133,12 +165,13 @@ happyNewToken action sts stk (tk:tks) =
 	TokenMinus -> cont 9;
 	TokenSeq -> cont 10;
 	TokenLoop -> cont 11;
-	TokenDo -> cont 12;
-	TokenEnd -> cont 13;
+	TokenWhile -> cont 12;
+	TokenDo -> cont 13;
+	TokenEnd -> cont 14;
 	_ -> happyError' (tk:tks)
 	}
 
-happyError_ 14 tk tks = happyError' tks
+happyError_ 15 tk tks = happyError' tks
 happyError_ _ tk tks = happyError' (tk:tks)
 
 newtype HappyIdentity a = HappyIdentity a
@@ -179,6 +212,7 @@ data Exp
     | AssM Var Var Const
     | Seq Exp Exp
     | Loop Var Exp
+    | While Var Exp
     deriving Show
 
 data Token
@@ -189,6 +223,7 @@ data Token
     | TokenMinus
     | TokenSeq
     | TokenLoop
+    | TokenWhile
     | TokenDo
     | TokenEnd
     deriving Show
@@ -204,27 +239,22 @@ lexer ('+':cs) = TokenPlus : lexer cs
 lexer ('-':cs) = TokenMinus : lexer cs
 lexer (';':cs) = TokenSeq : lexer cs
 lexer ('L':'O':'O':'P':cs) = TokenLoop : lexer cs
+lexer ('W':'H':'I':'L':'E':cs) = TokenWhile : lexer cs
 lexer ('D':'O':cs) = TokenDo : lexer cs
 lexer ('E':'N':'D':cs) = TokenEnd : lexer cs
 lexer ('x':cs) = lexVar cs
+    where lexVar cs = let (num, rest) = span isDigit cs
+                      in TokenVar (read num) : lexer rest
 lexer (c:cs)
     | isDigit c = lexNum (c:cs)
-lexer _ = error "Invalid syntax"
-
+    where lexNum cs = let (num,rest) = span isDigit cs
+                      in TokenConst (read num) : lexer rest
+lexer cs = error $ "Invalid syntax near " ++ take 5 cs ++ "..."
 skipLine ('\n':cs) = lexer cs
 skipLine (_:cs) = skipLine cs
 
-lexVar cs = TokenVar (read num) : lexer rest
-    where (num, rest) = span isDigit cs
-
-lexNum cs = TokenConst (read num) : lexer rest
-      where (num,rest) = span isDigit cs
-
-
 parseError :: [Token] -> a
 parseError tokens = error $ "Error parsing" ++ (show tokens)
-
---main = getContents >>= print . parse . lexer
 
 eval :: Exp -> Map.Map Var Const -> Const
 eval exp initial = fromMaybe 0 $ Map.lookup 0 $ evalIntoDict exp initial
@@ -237,6 +267,9 @@ eval exp initial = fromMaybe 0 $ Map.lookup 0 $ evalIntoDict exp initial
         evalIntoDict (AssM x y c) dict = evalIntoDict (AssP x y (-1*c)) dict
         evalIntoDict (Seq e1 e2) dict = evalIntoDict e2 $ evalIntoDict e1 dict
         evalIntoDict l@(Loop cond exp) dict = loop (fromMaybe 0 $ Map.lookup cond dict) exp dict
+        evalIntoDict l@(While cond exp) dict
+            | (fromMaybe 0 $ Map.lookup cond dict) == 0 = dict
+            | otherwise = evalIntoDict l $ evalIntoDict exp dict
 
 evalString :: String -> Map.Map Var Const -> Const
 evalString s dict = eval (parse $ lexer $ s) dict
@@ -260,7 +293,20 @@ main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [] -> return ()
+        [] -> do
+            putStrLn "LOOP / WHILE interpreter"
+            putStrLn "    Usage: "
+            putStrLn "        loop filename [x0 x1 x2 ...]\n"
+            putStrLn "    LOOP Syntax:"
+            putStrLn "        L ::= xn := xm + c"
+            putStrLn "            | xn := xm - c"
+            putStrLn "            | L; L"
+            putStrLn "            | LOOP xn DO L END\n"
+            putStrLn "    WHILE Syntax:"
+            putStrLn "        W ::= xn := xm + c"
+            putStrLn "            | xn := xm - c"
+            putStrLn "            | W; W"
+            putStrLn "            | WHILE xn DO W END\n"
         (f:[]) -> evalFileEmpty f
         (f:t) -> do
             let (vals, _) = span isInteger t
