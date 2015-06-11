@@ -285,6 +285,7 @@ evalFile file dict = do
 evalFileEmpty :: FilePath -> IO ()
 evalFileEmpty file = evalFile file Map.empty
 
+isInteger :: String -> Bool
 isInteger s = case reads s :: [(Integer, String)] of
   [(_, "")] -> True
   _         -> False
@@ -307,12 +308,8 @@ main = do
             putStrLn "            | xn := xm - c"
             putStrLn "            | W; W"
             putStrLn "            | WHILE xn DO W END\n"
-        (f:[]) -> evalFileEmpty f
         (f:t) -> do
-            let (vals, _) = span isInteger t
-                varVals = zip [0..] vals
-                dict = foldr (\(k, v) m -> Map.insert k (read v) m) Map.empty varVals
-            evalFile f dict
+            evalFile f $ (Map.fromList . zip [0..] . map read . fst . span isInteger) t
 {-# LINE 1 "templates\GenericTemplate.hs" #-}
 {-# LINE 1 "templates\\GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}

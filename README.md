@@ -1,6 +1,6 @@
 # LOOP and WHILE Interpreter
 
-LOOP and WHILE are pedagogical programming language designed by Uwe Schöning [see Wikipedia](https://en.wikipedia.org/wiki/LOOP_(programming_language\)).
+LOOP and WHILE are pedagogical programming languages designed by Uwe Schöning [see Wikipedia](https://en.wikipedia.org/wiki/LOOP_(programming_language)).
 
 This lets you run your LOOP and WHILE programs using a simple Haskell interpreter.
 
