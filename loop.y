@@ -3,7 +3,6 @@ import Data.Char (isDigit)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import System.Environment
-
 }
 
 %name parse
@@ -39,7 +38,13 @@ data Exp
     | Seq Exp Exp
     | Loop Var Exp
     | While Var Exp
-    deriving Show
+
+instance Show Exp where
+    show (AssP  v1 v2 c) = "x" ++ (show v1) ++ " := x" ++ (show v2) ++ " + " ++ (show c)
+    show (AssM  v1 v2 c) = "x" ++ (show v1) ++ " := x" ++ (show v2) ++ " - " ++ (show c)
+    show (Seq   e1 e2  ) = (show e1) ++ ";\n" ++ (show e2)
+    show (Loop  c  b   ) = "LOOP x" ++ (show c) ++ " DO\n" ++ (show b)
+    show (While c  b   ) = "WHILE x" ++ (show c) ++ " DO\n" ++ (show b)
 
 data Token
     = TokenVar Var
@@ -65,17 +70,23 @@ lexer ('+':cs) = TokenPlus : lexer cs
 lexer ('-':cs) = TokenMinus : lexer cs
 lexer (';':cs) = TokenSeq : lexer cs
 lexer ('L':'O':'O':'P':cs) = TokenLoop : lexer cs
+lexer ('l':'o':'o':'p':cs) = TokenLoop : lexer cs
 lexer ('W':'H':'I':'L':'E':cs) = TokenWhile : lexer cs
+lexer ('w':'h':'i':'l':'e':cs) = TokenWhile : lexer cs
 lexer ('D':'O':cs) = TokenDo : lexer cs
+lexer ('d':'o':cs) = TokenDo : lexer cs
 lexer ('E':'N':'D':cs) = TokenEnd : lexer cs
+lexer ('e':'n':'d':cs) = TokenEnd : lexer cs
+lexer ('X':cs) = lexVar cs
 lexer ('x':cs) = lexVar cs
-    where lexVar cs = let (num, rest) = span isDigit cs
-                      in TokenVar (read num) : lexer rest
 lexer (c:cs)
     | isDigit c = lexNum (c:cs)
     where lexNum cs = let (num,rest) = span isDigit cs
                       in TokenConst (read num) : lexer rest
 lexer cs = error $ "Invalid syntax near " ++ take 5 cs ++ "..."
+
+lexVar cs = let (num, rest) = span isDigit cs
+            in TokenVar (read num) : lexer rest
 skipLine ('\n':cs) = lexer cs
 skipLine (_:cs) = skipLine cs
 
@@ -88,14 +99,19 @@ eval exp initial = fromMaybe 0 $ Map.lookup 0 $ evalIntoDict exp initial
         loop :: Int -> Exp -> Map.Map Var Const -> Map.Map Var Const
         loop 0 exp dict = dict
         loop n exp dict = loop (n - 1) exp $ evalIntoDict exp dict
+
+        while :: Var -> Exp -> Map.Map Var Const -> Map.Map (Map.Map Var Const) Bool -> Map.Map Var Const
+        while cond exp dict states
+            | Map.member dict states = error $ "Infinite loop detected. In \n" ++ (show $ While cond exp)
+            | (fromMaybe 0 $ Map.lookup cond dict) == 0 = dict
+            | otherwise = while cond exp (evalIntoDict exp dict) (Map.insert dict True states)
+
         evalIntoDict :: Exp -> Map.Map Var Const -> Map.Map Var Const
         evalIntoDict (AssP x y c) dict = Map.insert x (max 0 $ (fromMaybe 0 $ Map.lookup y dict) + c) dict
         evalIntoDict (AssM x y c) dict = evalIntoDict (AssP x y (-1*c)) dict
         evalIntoDict (Seq e1 e2) dict = evalIntoDict e2 $ evalIntoDict e1 dict
         evalIntoDict l@(Loop cond exp) dict = loop (fromMaybe 0 $ Map.lookup cond dict) exp dict
-        evalIntoDict l@(While cond exp) dict
-            | (fromMaybe 0 $ Map.lookup cond dict) == 0 = dict
-            | otherwise = evalIntoDict l $ evalIntoDict exp dict
+        evalIntoDict l@(While cond exp) dict = while cond exp dict Map.empty
 
 evalString :: String -> Map.Map Var Const -> Const
 evalString s dict = eval (parse $ lexer $ s) dict
